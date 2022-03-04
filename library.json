@@ -1,0 +1,15 @@
+{
+    "name": "ESP AI Camera",
+    "keywords": "ESP32, Camera, AI, Camera, Websocket",
+    "description": "ESP AI Camera with Websocket Server",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/sunfounder/esp-ai-cam.git"
+    },
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "version": "1.0.0",
+    "dependencies": {
+        "ArduinoJson": "6.19.2"
+    }
+}
