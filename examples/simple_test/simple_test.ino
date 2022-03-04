@@ -1,4 +1,4 @@
-#include "esp_ai_cam.h"
+#include "ai_camera.h"
 
 
 // Uncomment the following line to use STA mode
@@ -8,10 +8,10 @@
 
 // Uncomment the following line to use AP mode
 int mode = AP;
-String ssid = "ESP_AI_CAMERA";
+String ssid = "AI_Camera";
 String password = "12345678";
 
-ESP_AI_Camera ai_cam = ESP_AI_Camera("ai_cam", "ai_cam");
+AI_Camera ai_cam = AI_Camera("ai_cam", "ai_cam");
 
 int port = 8765;
 

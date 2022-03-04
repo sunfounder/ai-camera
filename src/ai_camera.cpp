@@ -1,8 +1,8 @@
-#include "esp_ai_camera.h"
+#include "ai_camera.h"
 
 #define CHECK "SunFounder Controller"
 
-ESP_AI_Camera::ESP_AI_Camera(String _name, String _type) {
+AI_Camera::AI_Camera(String _name, String _type) {
   name = _name;
   type = _type;
   send_buffer["Name"] = name;
@@ -10,7 +10,7 @@ ESP_AI_Camera::ESP_AI_Camera(String _name, String _type) {
   send_buffer["Check"] = CHECK;
 }
 
-ESP_AI_Camera::begin(String _ssid, String _password, int _mode, int _port) {
+AI_Camera::begin(String _ssid, String _password, int _mode, int _port) {
   set("SSID", _ssid);
   set("PSK", _password);
   set("MODE", _mode);
@@ -22,7 +22,7 @@ ESP_AI_Camera::begin(String _ssid, String _password, int _mode, int _port) {
   Serial.println(_port);
 }
 
-String ESP_AI_Camera::read() {
+String AI_Camera::read() {
   String buf = "";
   char inChar;
   int temp;
@@ -47,26 +47,26 @@ String ESP_AI_Camera::read() {
   }
 }
 
-void ESP_AI_Camera::write(String value) { Serial.println(value); }
+void AI_Camera::write(String value) { Serial.println(value); }
 
-void ESP_AI_Camera::send_data() {
+void AI_Camera::send_data() {
   uint8_t* payload;
   send_buffer.clear();
   deserializeJson(send_buffer, payload);
   _command("WS", payload);
 }
 
-void ESP_AI_Camera::_command(String mode, String command, String value) {
+void AI_Camera::_command(String mode, String command, String value) {
   String data = mode + "+" + command + (char)value;
   write(data);
 }
 
-void ESP_AI_Camera::_command(String mode, String command) {
+void AI_Camera::_command(String mode, String command) {
   String data = mode + "+" + command;
   write(data);
 }
 
-String ESP_AI_Camera::set(String command, String value) {
+String AI_Camera::set(String command, String value) {
   _command("SET", command, value);
   while (1) {
     String result = read();
@@ -85,7 +85,7 @@ String ESP_AI_Camera::set(String command, String value) {
   return result;
 }
 
-void ESP_AI_Camera::set(String command) {
+void AI_Camera::set(String command) {
   _command("SET", command);
   while (1) {
     String result = read();
@@ -102,9 +102,9 @@ void ESP_AI_Camera::set(String command) {
   }
 }
 
-void ESP_AI_Camera::set_on_received(void (*func)()) { __on_receive__ = func; }
+void AI_Camera::set_on_received(void (*func)()) { __on_receive__ = func; }
 
-void ESP_AI_Camera::loop() {
+void AI_Camera::loop() {
   String receive = read();
   if (receive.length() == 0) {
   } else if (receive.startsWith("[CONNECTED]")) {
@@ -122,27 +122,27 @@ void ESP_AI_Camera::loop() {
   send_data();
 }
 
-int ESP_AI_Camera::getSlider(const char* region) {
+int AI_Camera::getSlider(const char* region) {
   int value = recvBuf[region];
   return value;
 }
 
-int ESP_AI_Camera::getButton(const char* region) {
+int AI_Camera::getButton(const char* region) {
   int value = recvBuf[region];
   return value;
 }
 
-bool ESP_AI_Camera::getSwitch(const char* region) {
+bool AI_Camera::getSwitch(const char* region) {
   bool value = recvBuf[region];
   return value;
 }
 
-int ESP_AI_Camera::getJoystick(const char* region, int axis) {
+int AI_Camera::getJoystick(const char* region, int axis) {
   int value = recvBuf[region][axis];
   return value;
 }
 
-int ESP_AI_Camera::getDPad(const char* region) {
+int AI_Camera::getDPad(const char* region) {
   const char* value = recvBuf[region];
   int result;
   if ((String)value == (String)"forward") result = DPAD_FORWARD;
@@ -154,18 +154,18 @@ int ESP_AI_Camera::getDPad(const char* region) {
   return result;
 }
 
-int ESP_AI_Camera::getThrottle(const char* region) {
+int AI_Camera::getThrottle(const char* region) {
   int value = recvBuf[region];
   return value;
 }
 
-void ESP_AI_Camera::setMeter(const char* region, double value) {
+void AI_Camera::setMeter(const char* region, double value) {
   sendBuf[region] = value;
 }
 
-void ESP_AI_Camera::setRadar(const char* region, int angle, double distance) {
+void AI_Camera::setRadar(const char* region, int angle, double distance) {
   #ifdef MC_DEBUG
-  Serial.printf("ESP_AI_Camera::setRadar(%d, %f)\n", angle, distance);
+  Serial.printf("AI_Camera::setRadar(%d, %f)\n", angle, distance);
   #endif
   if (sendBuf.containsKey(region)) {
     sendBuf[region][0] = angle;
@@ -177,13 +177,13 @@ void ESP_AI_Camera::setRadar(const char* region, int angle, double distance) {
   }
 }
 
-void ESP_AI_Camera::setGreyscale(const char* region, int value1, int value2, int value3) {
+void AI_Camera::setGreyscale(const char* region, int value1, int value2, int value3) {
   JsonArray data = sendBuf.createNestedArray(region);
   data.add(value1);
   data.add(value2);
   data.add(value3);
 }
 
-void ESP_AI_Camera::setValue(const char* region, double value) {
+void AI_Camera::setValue(const char* region, double value) {
   sendBuf[region] = value;
 }

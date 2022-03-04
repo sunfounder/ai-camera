@@ -1,3 +1,5 @@
+#ifndef __AI_CAMERA_H__
+#define __AI_CAMERA_H__
 
 #include <ArduinoJson.h>
 
@@ -13,9 +15,9 @@
 #define STA 1
 #define AP 2
 
-class ESP_AI_Camera {
+class AI_Camera {
   public:
-    ESP_AI_Camera();
+    AI_Camera();
 
     DynamicJsonDocument send_buffer = DynamicJsonDocument(1024);
     DynamicJsonDocument recv_buffer = DynamicJsonDocument(1024);
@@ -47,3 +49,5 @@ class ESP_AI_Camera {
     void _command(String mode, String command);
     void (*__on_receive__)();
 };
+
+#endif // __AI_CAMERA_H__
