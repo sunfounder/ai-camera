@@ -13,20 +13,20 @@
 #define JOYSTICK_X 0
 #define JOYSTICK_Y 1
 
-#define WIFI_MODE_NONE 0
-#define WIFI_MODE_STA 1
-#define WIFI_MODE_AP 2
+#define WIFI_MODE_NONE "0"
+#define WIFI_MODE_STA  "1"
+#define WIFI_MODE_AP   "2"
 
-#define CAMERA_MODE_AI 0
-#define CAMERA_MODE_STREAM 1
-#define CAMERA_MODE_BOTH 2
+#define CAMERA_MODE_AI     "0"
+#define CAMERA_MODE_STREAM "1"
+#define CAMERA_MODE_BOTH   "2"
 
 class AiCamera {
   public:
     AiCamera(const char* name, const char* type);
 
-    DynamicJsonDocument sendBuffer = DynamicJsonDocument(100);
-    DynamicJsonDocument recvBuffer = DynamicJsonDocument(100);
+    DynamicJsonDocument sendBuffer = DynamicJsonDocument(1024);
+    DynamicJsonDocument recvBuffer = DynamicJsonDocument(1024);
     char name[40];
     char type[40];
 
@@ -39,9 +39,13 @@ class AiCamera {
     void readInto(char* buffer);
     String read();
     void sendData();
-    void set(const char* command, char* result);
-    void set(const char* command, const char* value, char* result);
-    void set(const char* command, int value, char* result);
+    void set(const char* command);
+    void set(const char* command, int value);
+    void set(const char* command, const char* value);
+    void get(const char* command, char* result);
+    void get(const char* command, int value, char* result);
+    void get(const char* command, const char* value, char* result);
+    void command(const char* command, const char* value, char* result) ;
     void setOnReceived(void (*func)());
     void loop();
 
@@ -64,8 +68,6 @@ class AiCamera {
     int cameraMode = CAMERA_MODE_STREAM;
 
     void subString(char* str, int start);
-    void concat(char* str1, char* str2);
-    void concat(char* str1, char str2);
     void (*__on_receive__)();
 };
 

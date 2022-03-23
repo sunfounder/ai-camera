@@ -36,17 +36,16 @@ void AiCamera::setCameraMode(int cameraMode) {
 }
 
 void AiCamera::begin() {
-  Serial.print("[DEBUG] AiCamera::begin: ");
-  Serial.println(this->ssid);
-  char result[100];
-  this->set("SSID", this->ssid, result);
-  this->set("PSK", this->password, result);
-  this->set("MODE", this->wifiMode, result);
-  this->set("PORT", this->wsPort, result);
-  this->set("CAMERA_MODE", this->cameraMode, result);
-  this->set("START", result);
+  // Serial.println("AiCamera::begin");
+  char ip[15];
+  this->set("SSID", this->ssid);
+  this->set("PSK", this->password);
+  this->set("MODE", this->wifiMode);
+  this->set("PORT", this->wsPort);
+  this->set("CAMERA_MODE", this->cameraMode);
+  this->get("START", ip);
   Serial.print("WebServer started on ws://");
-  Serial.print(result);
+  Serial.print(ip);
   Serial.print(":");
   Serial.println(this->wsPort);
 }
@@ -100,62 +99,59 @@ void AiCamera::sendData() {
   uint8_t* payload;
   this->sendBuffer.clear();
   deserializeJson(this->sendBuffer, payload);
-  char* data = "WS+";
+  char data[1027] = "WS+";
   strcat(data, (char*)payload);
   Write(data);
 }
 
-void AiCamera::set(const char* command, char* result) {
-  this->set(command, "", result);
+void AiCamera::set(const char* command) {
+  char result[10];
+  this->command(command, "", result);
 }
 
-void AiCamera::set(const char* command, int value, char* result) {
-  this->set(command, (char*)value, result);
+void AiCamera::set(const char* command, int value) {
+  char result[10];
+  char data[10];
+  sprintf(data, "%d", value);
+  this->command(command, data, result);
 }
 
-void AiCamera::set(const char* command, const char* value, char* result) {
-  char* data = "SET+";
+void AiCamera::set(const char* command, const char* value) {
+  char result[10];
+  this->command(command, value, result);
+}
+
+void AiCamera::get(const char* command, char* result) {
+  this->command(command, "", result);
+}
+
+void AiCamera::get(const char* command, int value, char* result) {
+  char data[10];
+  sprintf(data, "%d", value);
+  this->command(command, value, result);
+}
+
+void AiCamera::get(const char* command, const char* value, char* result) {
+  this->command(command, value, result);
+}
+
+void AiCamera::command(const char* command, const char* value, char* result) {
+  Serial.print("AiCamera::command command: ");
+  Serial.print(" command: ");
+  Serial.print(command);
+  Serial.print(" value: ");
+  Serial.println(value);
+  char data[30] = "SET+";
   strcat(data, command);
   strcat(data, value);
   Write(data);
   while (1) {
     this->readInto(result);
-    // Serial.println("AiCamera::set result: ");
-    // Serial.println("ABCDEFG");
-    // String tempString = String(result);
-    // if (tempString.startsWith("[ERROR]")) {
-    //   Serial.println(result);
-    //   while (1)
-    //     ;
-    //   ;
-    // }
-    // Serial.println(result);
-    // Serial.println(strlen(result));
-    // Serial.println(strncmp((const char*)result, "[OK]", 4) == 0);
-    // Serial.println(IsStartWith(result, "[OK]"));
-    // Serial.println(IsStartWith("[OK]\0", "[OK]"));
-    // Serial.println(IsStartWith("[OK] ", "[OK]"));
-    // Serial.println(IsStartWith("[OK]\r\n", "[OK]"));
-    // Serial.println(IsStartWith("[OK]1235534", "[OK]"));
-    // Serial.println(IsStartWith("[OK] sdfddd", "[OK]"));
-    // Serial.println(IsStartWith("[OK", "[OK]"));
-    // Serial.println(IsStartWith("[OKfcf", "[OK]"));
-    for (int i = 0; i < strlen(result); i++) {
-      Serial.print((int)result[i]);
-      Serial.print(" ");
-      Serial.println((int)OK_FLAG[i]);
-    }
     if (IsStartWith(result, OK_FLAG)){
       Serial.println(result);
+      this->subString(result, strlen(OK_FLAG) + 1); // Add 1 for Space
+      break;
     }
-    // if (tempString.startsWith("[OK]")) {
-    //   Serial.println(tempString);
-    //   tempString = tempString.substring(4);
-    //   tempString.trim();
-    //   strcpy(result, tempString.c_str());
-    //   break;
-    // }
-    delay(1000);
   }
 }
 
@@ -260,19 +256,4 @@ void AiCamera::subString(char* str, int start) {
       str[i] = '\0';
     }
   }
-}
-
-void AiCamera::concat(char* str1, char str2) {
-  int length1 = strlen(str1);
-  str1[length1] = str2;
-  str1[length1 + 1] = '\0';
-}
-
-void AiCamera::concat(char* str1, char* str2) {
-  int length1 = strlen(str1);
-  int length2 = strlen(str2);
-  for (int i = 0; i < length2; i++) {
-    str1[length1 + i] = str2[i];
-  }
-  str1[length1 + length2] = '\0';
 }
