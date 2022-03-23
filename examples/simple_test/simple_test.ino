@@ -13,7 +13,7 @@
 
 
 #define CAMERA_MODE CAMERA_MODE_STREAM
-#define PORT 8765
+#define PORT "8765"
 
 AiCamera aiCam = AiCamera("aiCam", "aiCam");
 
@@ -34,14 +34,16 @@ void on_receive() {
 void setup() {
   Serial.begin(115200);
   Serial.println("aiCam begin");
-  aiCam.setSSID(SSID);
-  aiCam.setPassword(PASSWORD);
-  aiCam.setWiFiMode(WIFI_MODE);
-  aiCam.setWSPort(PORT);
-  aiCam.setCameraMode(CAMERA_MODE);
-  aiCam.begin();
+  // aiCam.setSSID(SSID);
+  // aiCam.setPassword(PASSWORD);
+  // aiCam.setWiFiMode(WIFI_MODE);
+  // aiCam.setWSPort(PORT);
+  // aiCam.setCameraMode(CAMERA_MODE);
+  // aiCam.begin();
+  aiCam.begin(SSID, PASSWORD, WIFI_MODE, PORT, CAMERA_MODE);
 }
 
 void loop() {
   aiCam.loop();
+  delay(10);
 }
