@@ -2,6 +2,8 @@
 #define __AI_CAMERA_H__
 
 #include <ArduinoJson.h>
+#include "Arduino.h"
+#include "string.h"
 
 #define DPAD_STOP 0
 #define DPAD_FORWARD 1
@@ -11,26 +13,36 @@
 #define JOYSTICK_X 0
 #define JOYSTICK_Y 1
 
-#define NONE 0
-#define STA 1
-#define AP 2
+#define WIFI_MODE_NONE 0
+#define WIFI_MODE_STA 1
+#define WIFI_MODE_AP 2
 
-class AI_Camera {
+#define CAMERA_MODE_AI 0
+#define CAMERA_MODE_STREAM 1
+#define CAMERA_MODE_BOTH 2
+
+class AiCamera {
   public:
-    AI_Camera();
+    AiCamera(const char* name, const char* type);
 
-    DynamicJsonDocument send_buffer = DynamicJsonDocument(1024);
-    DynamicJsonDocument recv_buffer = DynamicJsonDocument(1024);
-    String name;
-    String type;
+    DynamicJsonDocument sendBuffer = DynamicJsonDocument(100);
+    DynamicJsonDocument recvBuffer = DynamicJsonDocument(100);
+    char name[40];
+    char type[40];
 
-    void begin(String _ssid, String _password, int _mode, int _port);
+    void setSSID(const char* ssid);
+    void setPassword(const char* password);
+    void setWiFiMode(int wifiMode);
+    void setWSPort(int port);
+    void setCameraMode(int cameraMode);
+    void begin();
+    void readInto(char* buffer);
     String read();
-    void write(String value);
-    void send_data();
-    void set(String command, String value);
-    void set(String command);
-    void set_on_received(void (*func)());
+    void sendData();
+    void set(const char* command, char* result);
+    void set(const char* command, const char* value, char* result);
+    void set(const char* command, int value, char* result);
+    void setOnReceived(void (*func)());
     void loop();
 
     int getSlider(const char* region);
@@ -45,8 +57,15 @@ class AI_Camera {
     void setValue(const char* region, double value);
 
   private:
-    void _command(String mode, String command, String value);
-    void _command(String mode, String command);
+    char ssid[30] = "AiCamera";
+    char password[30] = "12345678";
+    int wifiMode = WIFI_MODE_AP;
+    int wsPort = 8765;
+    int cameraMode = CAMERA_MODE_STREAM;
+
+    void subString(char* str, int start);
+    void concat(char* str1, char* str2);
+    void concat(char* str1, char str2);
     void (*__on_receive__)();
 };
 
