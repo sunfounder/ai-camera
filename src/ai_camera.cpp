@@ -1,41 +1,56 @@
 #include "ai_camera.h"
 
-#define CHECK "SunFounder Controller"
+// #define AI_CAM_DEBUG
+// #define AI_CAM_DEBUG_CUSTOM
+
+#ifdef AI_CAM_DEBUG_CUSTOM
+#include <SoftwareSerial.h>
+SoftwareSerial dSerial(10, 11); // RX, TX
+#endif
+
+#define CHECK "SC"
 #define OK_FLAG "[OK]"
+#define WS_HEADER "WS+"
 #define IsStartWith(str, prefix) (strncmp(str, prefix, strlen(prefix)) == 0)
 #define StrAppend(str, suffix) int len=strlen(str); str[len] = suffix; str[len+1] = '\0'
-#define SERIAL_TIMEOUT 200
+#define SERIAL_TIMEOUT 100
+#define WS_BUFFER_SIZE 100
 
-DynamicJsonDocument sendBuffer = DynamicJsonDocument(1024);
-DynamicJsonDocument recvBuffer = DynamicJsonDocument(1024);
+#ifdef AI_CAM_DEBUG_CUSTOM
+#define DateSerial dSerial
+#define DebugSerial Serial
+#else
+#define DateSerial Serial
+#define DebugSerial Serial
+#endif
+
+DynamicJsonDocument sendBuffer = DynamicJsonDocument(WS_BUFFER_SIZE);
+DynamicJsonDocument recvBuffer = DynamicJsonDocument(WS_BUFFER_SIZE);
 
 AiCamera::AiCamera(const char* name, const char* type) {
-  // Serial.begin(115200);
-  // Serial.print("AiCamera::AiCamera");
-  // Serial.print(" name: ");
-  // Serial.print(name);
-  // Serial.print(" type: ");
-  // Serial.println(type);
   sendBuffer["Name"] = name;
   sendBuffer["Type"] = type;
   sendBuffer["Check"] = CHECK;
-  // Serial.println((char*)(sendBuffer["Name"]));
 }
 
 void AiCamera::begin(const char* ssid, const char* password, const char* wifiMode, const char* wsPort, const char* cameraMode) {
-  // Serial.println("AiCamera::begin");
+  #ifdef AI_CAM_DEBUG
+  DateSerial.begin(115200);
+  #endif
   char ip[15];
+  this->set("RESET");
   this->set("SSID", ssid);
   this->set("PSK",  password);
   this->set("MODE", wifiMode);
   this->set("PORT", wsPort);
   this->set("CAMERA_MODE", cameraMode);
   this->get("START", ip);
-  Serial.print("[DEBUG] WebServer started on ws://");
-  Serial.print(ip);
-  Serial.print(":");
-  Serial.println(wsPort);
-  Serial.println((char*)(sendBuffer["Name"]));
+  #ifdef AI_CAM_DEBUG
+  DebugSerial.print("[DEBUG] WebServer started on ws://");
+  DebugSerial.print(ip);
+  DebugSerial.print(":");
+  DebugSerial.println(wsPort);
+  #endif
 }
 
 void AiCamera::readInto(char* buffer) {
@@ -43,8 +58,8 @@ void AiCamera::readInto(char* buffer) {
   unsigned long timeoutStart = millis();
   buffer[0] = '\0';
 
-  while (Serial.available() > 0 || (millis() - timeoutStart) < SERIAL_TIMEOUT) {
-    incomingChar = (char)Serial.read();
+  while (DateSerial.available() > 0 || (millis() - timeoutStart) < SERIAL_TIMEOUT) {
+    incomingChar = (char)DateSerial.read();
     if (incomingChar == '\n') {
       break;
     } else if (incomingChar == '\r') {
@@ -54,24 +69,22 @@ void AiCamera::readInto(char* buffer) {
     }
   }
   if (strlen(buffer) > 0) {
-    // Serial.print("AiCamera::readInto buffer: ");
-    // Serial.println(strlen(buffer));
     if (IsStartWith(buffer, "[DEBUG] ")) {
       String tempString = String(buffer);
       tempString.replace("[DEBUG]", "[AI_CAMERA]");
-      Serial.println(tempString);
+      #ifdef AI_CAM_DEBUG
+      DebugSerial.println(tempString);
+      #endif
       buffer[0] = "\0";
     }
   }
 }
 
 void AiCamera::sendData() {
-  uint8_t payload[1024];
-  // sendBuffer.clear();
-  Serial.println((char*)(sendBuffer["Name"]));
-  deserializeJson(sendBuffer, payload);
-  Serial.print("WS+");
-  Serial.println((char*)payload);
+  uint8_t payload[WS_BUFFER_SIZE];
+  serializeJson(sendBuffer, payload);
+  DateSerial.print("WS+");
+  DateSerial.println((char*)payload);
 }
 
 void AiCamera::set(const char* command) {
@@ -93,19 +106,22 @@ void AiCamera::get(const char* command, const char* value, char* result) {
 }
 
 void AiCamera::command(const char* command, const char* value, char* result) {
-  Serial.print("AiCamera::command command: ");
-  Serial.print(" command: ");
-  Serial.print(command);
-  Serial.print(" value: ");
-  Serial.println(value);
-  char data[30] = "SET+";
-  strcat(data, command);
-  strcat(data, value);
-  Serial.println(data);
+  #ifdef AI_CAM_DEBUG
+  DebugSerial.print("AiCamera::command: ");
+  DebugSerial.print("SET+");
+  DebugSerial.print(command);
+  DebugSerial.println(value);
+  #endif
+  DateSerial.print("SET+");
+  DateSerial.print(command);
+  DateSerial.println(value);
   while (1) {
     this->readInto(result);
     if (IsStartWith(result, OK_FLAG)){
-      Serial.println(result);
+      #ifdef AI_CAM_DEBUG
+      DebugSerial.print("Result: ");
+      DebugSerial.println(result);
+      #endif
       this->subString(result, strlen(OK_FLAG) + 1); // Add 1 for Space
       break;
     }
@@ -115,55 +131,81 @@ void AiCamera::command(const char* command, const char* value, char* result) {
 void AiCamera::setOnReceived(void (*func)()) { __on_receive__ = func; }
 
 void AiCamera::loop() {
-  Serial.println("AiCamera::loop");
-  Serial.println((char*)(sendBuffer["Name"]));
-  char receive[1024];
+  char receive[WS_BUFFER_SIZE];
   this->readInto(receive);
-  // Serial.println(receive);
-  // if (strlen(receive) == 0) {
-  // } else if (IsStartWith(receive, "[CONNECTED]")) {
-  //   this->subString(receive, 11);
-  //   Serial.print("Connected from ");
-  //   Serial.println(receive);
-  // } else if (IsStartWith(receive, "[DISCONNECTED]")) {
-  //   this->subString(receive, 14);
-  //   Serial.println("Disconnected from ");
-  //   Serial.println(receive);
-  //   return;
-  // } else {
-  //   recvBuffer.clear();
-  //   String tempString = String(receive);
-  //   serializeJson(recvBuffer, tempString);
-  //   if (__on_receive__ != NULL) {
-  //     __on_receive__();
-  //   }
-  // }
+  #ifdef AI_CAM_DEBUG
+  DebugSerial.println(receive);
+  #endif
+  if (strlen(receive) == 0) {
+    return;
+  }
+  if (IsStartWith(receive, "[CONNECTED]")) {
+    #ifdef AI_CAM_DEBUG
+    this->subString(receive, 11);
+    DebugSerial.print("Connected from ");
+    DebugSerial.println(receive);
+    #endif
+  } else if (IsStartWith(receive, "[DISCONNECTED]")) {
+    #ifdef AI_CAM_DEBUG
+    this->subString(receive, 14);
+    DebugSerial.println("Disconnected from ");
+    DebugSerial.println(receive);
+    #endif
+    return;
+  } else {
+    this->subString(receive, strlen(WS_HEADER));
+    // #ifdef AI_CAM_DEBUG
+    // DebugSerial.print("[AI_CAMERA] Received: ");
+    // DebugSerial.println(receive);
+    // #endif
+    recvBuffer.clear();
+    DeserializationError err = deserializeJson(recvBuffer, receive);
+    // if (err != DeserializationError::Ok) {
+    //   DebugSerial.print("[ERROR] Received failed: ");
+    //   DebugSerial.println(err.c_str());
+    //   recvBuffer.clear();
+    // } else {
+      if (__on_receive__ != NULL) {
+        __on_receive__();
+      }
+    // }
+  }
   this->sendData();
 }
 
-int AiCamera::getSlider(const char* region) {
-  int value = recvBuffer[region];
+int16_t AiCamera::getSlider(const char* region) {
+  int value = (int)recvBuffer[region];
   return value;
 }
 
-int AiCamera::getButton(const char* region) {
-  int value = recvBuffer[region];
+bool AiCamera::getButton(const char* region) {
+  bool value = (bool)recvBuffer[region];
   return value;
 }
 
 bool AiCamera::getSwitch(const char* region) {
-  bool value = recvBuffer[region];
+  bool value = (bool)recvBuffer[region];
   return value;
 }
 
-int AiCamera::getJoystick(const char* region, int axis) {
-  int value = recvBuffer[region][axis];
-  return value;
+int16_t AiCamera::getJoystick(const char* region, uint8_t axis) {
+  int16_t x, y, angle, radius;
+  x = (int16_t)recvBuffer[region][0];
+  y = (int16_t)recvBuffer[region][1];
+  angle = atan2(x, y) * 180 / PI;
+  radius = sqrt(y * y + x * x);
+  switch (axis) {
+    case JOYSTICK_X: return x;
+    case JOYSTICK_Y: return y;
+    case JOYSTICK_ANGLE: return angle;
+    case JOYSTICK_RADIUS: return radius;
+    default: return 0;
+  }
 }
 
-int AiCamera::getDPad(const char* region) {
-  const char* value = recvBuffer[region];
-  int result;
+uint8_t AiCamera::getDPad(const char* region) {
+  const char* value = (const char*)recvBuffer[region];
+  uint8_t result;
   if ((String)value == (String)"forward") result = DPAD_FORWARD;
   else if ((String)value == (String)"backward") result = DPAD_BACKWARD;
   else if ((String)value == (String)"left") result = DPAD_LEFT;
@@ -173,8 +215,8 @@ int AiCamera::getDPad(const char* region) {
   return result;
 }
 
-int AiCamera::getThrottle(const char* region) {
-  int value = recvBuffer[region];
+int16_t AiCamera::getThrottle(const char* region) {
+  int16_t value = (int16_t)recvBuffer[region];
   return value;
 }
 
@@ -182,10 +224,7 @@ void AiCamera::setMeter(const char* region, double value) {
   sendBuffer[region] = value;
 }
 
-void AiCamera::setRadar(const char* region, int angle, double distance) {
-  #ifdef MC_DEBUG
-  Serial.printf("AiCamera::setRadar(%d, %f)\n", angle, distance);
-  #endif
+void AiCamera::setRadar(const char* region, int16_t angle, double distance) {
   if (sendBuffer.containsKey(region)) {
     sendBuffer[region][0] = angle;
     sendBuffer[region][1] = distance;
@@ -196,7 +235,7 @@ void AiCamera::setRadar(const char* region, int angle, double distance) {
   }
 }
 
-void AiCamera::setGreyscale(const char* region, int value1, int value2, int value3) {
+void AiCamera::setGreyscale(const char* region, uint16_t value1, uint16_t value2, uint16_t value3) {
   JsonArray data = sendBuffer.createNestedArray(region);
   data.add(value1);
   data.add(value2);
@@ -207,9 +246,13 @@ void AiCamera::setValue(const char* region, double value) {
   sendBuffer[region] = value;
 }
 
-void AiCamera::subString(char* str, int start) {
-  int length = strlen(str);
-  for (int i = 0; i < length; i++) {
+void AiCamera::setVideo(const char* url) {
+  sendBuffer["video"] = url;
+}
+
+void AiCamera::subString(char* str, uint8_t start) {
+  uint8_t length = strlen(str);
+  for (uint8_t i = 0; i < length; i++) {
     if (i + start < length) {
       str[i] = str[i + start];
     } else {

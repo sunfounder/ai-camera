@@ -10,8 +10,11 @@
 #define DPAD_BACKWARD 2
 #define DPAD_LEFT     3
 #define DPAD_RIGHT    4
-#define JOYSTICK_X    0
-#define JOYSTICK_Y    1
+
+#define JOYSTICK_X       0
+#define JOYSTICK_Y       1
+#define JOYSTICK_ANGLE   2
+#define JOYSTICK_RADIUS  3
 
 #define WIFI_MODE_NONE "0"
 #define WIFI_MODE_STA  "1"
@@ -38,19 +41,20 @@ class AiCamera {
     void setOnReceived(void (*func)());
     void loop();
 
-    int getSlider(const char* region);
-    int getButton(const char* region);
+    int16_t getSlider(const char* region);
+    bool getButton(const char* region);
     bool getSwitch(const char* region);
-    int getJoystick(const char* region, int axis);
-    int getDPad(const char* region);
-    int getThrottle(const char* region);
+    int16_t getJoystick(const char* region, uint8_t axis);
+    uint8_t getDPad(const char* region);
+    int16_t getThrottle(const char* region);
     void setMeter(const char* region, double value);
-    void setRadar(const char* region, int angle, double distance);
-    void setGreyscale(const char* region, int value1, int value2, int value3);
+    void setRadar(const char* region, int16_t angle, double distance);
+    void setGreyscale(const char* region, uint16_t value1, uint16_t value2, uint16_t value3);
     void setValue(const char* region, double value);
+    void setVideo(const char* url);
 
   private:
-    void subString(char* str, int start);
+    void subString(char* str, uint8_t start);
     void (*__on_receive__)();
 };
 
