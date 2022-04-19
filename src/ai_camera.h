@@ -1,7 +1,6 @@
 #ifndef __AI_CAMERA_H__
 #define __AI_CAMERA_H__
 
-#include <ArduinoJson.h>
 #include "Arduino.h"
 #include "string.h"
 
@@ -24,6 +23,33 @@
 #define CAMERA_MODE_STREAM "1"
 #define CAMERA_MODE_BOTH   "2"
 
+#define REGION_A 0
+#define REGION_B 1
+#define REGION_C 2
+#define REGION_D 3
+#define REGION_E 4
+#define REGION_F 5
+#define REGION_G 6
+#define REGION_H 7
+#define REGION_I 8
+#define REGION_J 9
+#define REGION_K 10
+#define REGION_L 11
+#define REGION_M 12
+#define REGION_N 13
+#define REGION_O 14
+#define REGION_P 15
+#define REGION_Q 16
+#define REGION_R 17
+#define REGION_S 18
+#define REGION_T 19
+#define REGION_U 20
+#define REGION_V 21
+#define REGION_W 22
+#define REGION_X 23
+#define REGION_Y 24
+#define REGION_Z 25
+
 class AiCamera {
   public:
     AiCamera(const char* name, const char* type);
@@ -42,21 +68,29 @@ class AiCamera {
     void setOnReceived(void (*func)());
     void loop();
 
-    int16_t getSlider(const char* region);
-    bool getButton(const char* region);
-    bool getSwitch(const char* region);
-    int16_t getJoystick(const char* region, uint8_t axis);
-    uint8_t getDPad(const char* region);
-    int16_t getThrottle(const char* region);
-    void setMeter(const char* region, double value);
-    void setRadar(const char* region, int16_t angle, double distance);
-    void setGreyscale(const char* region, uint16_t value1, uint16_t value2, uint16_t value3);
-    void setValue(const char* region, double value);
-    void setVideo(const char* url);
+    int16_t getSlider(uint8_t region);
+    bool getButton(uint8_t region);
+    bool getSwitch(uint8_t region);
+    int16_t getJoystick(uint8_t region, uint8_t axis);
+    uint8_t getDPad(uint8_t region);
+    int16_t getThrottle(uint8_t region);
+    void setMeter(uint8_t region, double value);
+    void setRadar(uint8_t region, int16_t angle, double distance);
+    void setGreyscale(uint8_t region, uint16_t value1, uint16_t value2, uint16_t value3);
+    void setValue(uint8_t region, double value);
 
   private:
-    void subString(char* str, uint8_t start);
+    void subString(char* str, int16_t start, int16_t end=-1);
     void (*__on_receive__)();
+    char name[32];
+    char type[32];
+    // void getStrOf(char* str, uint8_t index, char* result);
+    void getStrOf(char* str, uint8_t index, char* result, char divider);
+    // void setStrOf(char* str, uint8_t index, char* value);
+    void setStrOf(char* str, uint8_t index, String value);
+    int16_t getIntOf(char* str, uint8_t index);
+    bool getBoolOf(char* str, uint8_t index);
+    double getDoubleOf(char* str, uint8_t index);
 };
 
 #endif // __AI_CAMERA_H__

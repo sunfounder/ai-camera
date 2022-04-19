@@ -17,18 +17,18 @@
 AiCamera aiCam = AiCamera("aiCam", "aiCam");
 
 void onReceive() {
-  // Serial.print("Slider D: ");Serial.println(aiCam.getSlider("D"));
-  // Serial.print("Switch J: ");Serial.println(aiCam.getSwitch("J"));
-  // Serial.print("Button I: ");Serial.println(aiCam.getButton("I"));
-  // Serial.print("Joystick Q X: ");Serial.println(aiCam.getJoystick("Q", JOYSTICK_X));
-  // Serial.print("Joystick Q Y: ");Serial.println(aiCam.getJoystick("Q", JOYSTICK_Y));
-  Serial.print("Joystick Q Angle: ");Serial.println(aiCam.getJoystick("Q", JOYSTICK_ANGLE));
-  Serial.print("Joystick Q Radius: ");Serial.println(aiCam.getJoystick("Q", JOYSTICK_RADIUS));
-  // Serial.print("Throttle K: ");Serial.println(aiCam.getThrottle("K"));
-  // aiCam.setMeter("H", 46);
-  // aiCam.setRadar("B", 20, 30);
-  // aiCam.setGreyscale("A", 300, 234, 678);
-  // aiCam.setValue("C", 498);
+  Serial.print("Slider D: ");Serial.println(aiCam.getSlider(REGION_D));
+  Serial.print("Switch J: ");Serial.println(aiCam.getSwitch(REGION_J));
+  Serial.print("Button I: ");Serial.println(aiCam.getButton(REGION_I));
+  Serial.print("Joystick Q X: ");Serial.println(aiCam.getJoystick(REGION_Q, JOYSTICK_X));
+  Serial.print("Joystick Q Y: ");Serial.println(aiCam.getJoystick(REGION_Q, JOYSTICK_Y));
+  Serial.print("Joystick Q Angle: ");Serial.println(aiCam.getJoystick(REGION_Q, JOYSTICK_ANGLE));
+  Serial.print("Joystick Q Radius: ");Serial.println(aiCam.getJoystick(REGION_Q, JOYSTICK_RADIUS));
+  Serial.print("Throttle K: ");Serial.println(aiCam.getThrottle(REGION_K));
+  aiCam.setMeter(REGION_H, 46);
+  aiCam.setRadar(REGION_B, 20, 30);
+  aiCam.setGreyscale(REGION_A, 300, 234, 678);
+  aiCam.setValue(REGION_C, 498);
 }
 
 void setup() {
