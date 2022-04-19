@@ -212,7 +212,9 @@ int16_t AiCamera::getJoystick(uint8_t region, uint8_t axis) {
 }
 
 uint8_t AiCamera::getDPad(uint8_t region) {
-  int16_t value = getIntOf(recvBuffer, region);
+  char value[10];
+  getStrOf(recvBuffer, region, value, ';');
+  
   return value;
 }
 
