@@ -12,9 +12,10 @@ SoftwareSerial dSerial(10, 11); // RX, TX
 #define OK_FLAG "[OK]"
 #define WS_HEADER "WS+"
 #define IsStartWith(str, prefix) (strncmp(str, prefix, strlen(prefix)) == 0)
-#define StrAppend(str, suffix) int len=strlen(str); str[len] = suffix; str[len+1] = '\0'
+#define StrAppend(str, suffix) uint32_t len=strlen(str); str[len] = suffix; str[len+1] = '\0'
+#define StrClear(str) str[0] = 0
 #define SERIAL_TIMEOUT 100
-#define WS_BUFFER_SIZE 100
+#define WS_BUFFER_SIZE 110
 
 #ifdef AI_CAM_DEBUG_CUSTOM
 #define DateSerial dSerial
@@ -26,6 +27,8 @@ SoftwareSerial dSerial(10, 11); // RX, TX
 
 DynamicJsonDocument sendBuffer = DynamicJsonDocument(WS_BUFFER_SIZE);
 DynamicJsonDocument recvBuffer = DynamicJsonDocument(WS_BUFFER_SIZE);
+
+char readBuffer[WS_BUFFER_SIZE + strlen(WS_HEADER)];
 
 AiCamera::AiCamera(const char* name, const char* type) {
   sendBuffer["Name"] = name;
@@ -53,32 +56,80 @@ void AiCamera::begin(const char* ssid, const char* password, const char* wifiMod
   #endif
 }
 
-void AiCamera::readInto(char* buffer) {
-  char incomingChar;
-  unsigned long timeoutStart = millis();
-  buffer[0] = '\0';
+// void AiCamera::readInto(char* buffer) {
+//   char incomingChar;
+//   unsigned long timeoutStart = millis();
+//   StrClear(buffer);
 
-  while (DateSerial.available() > 0 || (millis() - timeoutStart) < SERIAL_TIMEOUT) {
+//   while (DateSerial.available() > 0 || (millis() - timeoutStart) < SERIAL_TIMEOUT) {
+//     incomingChar = (char)DateSerial.read();
+//     if (incomingChar == '\n') {
+//       break;
+//     } else if (incomingChar == '\r') {
+//       continue;
+//     } else if ((int)incomingChar > 31 && (int)incomingChar < 127) {
+//       StrAppend(buffer, incomingChar);
+//     }
+//   }
+//   if (strlen(buffer) > 0) {
+//     if (IsStartWith(buffer, "[DEBUG] ")) {
+//       #ifdef AI_CAM_DEBUG
+//       String tempString = String(buffer);
+//       tempString.replace("[DEBUG]", "[AI_CAMERA]");
+//       DebugSerial.println(tempString);
+//       #endif
+//       StrClear(buffer);
+//     }
+//   }
+// }
+
+void AiCamera::readInto(char* buffer) {
+// void AiCamera::readIntoUnblock(char* buffer) {
+  bool finished = false;
+  char incomingChar;
+  StrClear(buffer);
+  // DebugSerial.print("Buffer length: ");
+  // DebugSerial.println(strlen(buffer));
+
+  while (DateSerial.available()) {
     incomingChar = (char)DateSerial.read();
     if (incomingChar == '\n') {
+      finished = true;
       break;
     } else if (incomingChar == '\r') {
       continue;
     } else if ((int)incomingChar > 31 && (int)incomingChar < 127) {
-      StrAppend(buffer, incomingChar);
+      StrAppend(readBuffer, incomingChar);
     }
   }
-  if (strlen(buffer) > 0) {
-    if (IsStartWith(buffer, "[DEBUG] ")) {
-      String tempString = String(buffer);
-      tempString.replace("[DEBUG]", "[AI_CAMERA]");
+  if (finished) {
+    // DebugSerial.println("Read into unblock finished");
+    if (IsStartWith(readBuffer, "[DEBUG] ")) {
       #ifdef AI_CAM_DEBUG
+      String tempString = String(readBuffer);
+      tempString.replace("[DEBUG]", "[AI_CAMERA]");
       DebugSerial.println(tempString);
       #endif
-      buffer[0] = "\0";
+      StrClear(buffer);
+    } else {
+      // strncpy(buffer, readBuffer, strlen(readBuffer));
+      strcpy(buffer, readBuffer);
     }
+    StrClear(readBuffer);
   }
 }
+
+// void AiCamera::readIntoUnblock(char* buffer) {
+//   // DebugSerial.print("Buffer length: ");
+//   // DebugSerial.println(strlen(buffer));
+//   String result = "";
+//   result.reserve(WS_BUFFER_SIZE);
+
+//   if (DateSerial.available()) {
+//     result = DateSerial.readStringUntil('\n');
+//     strcpy(buffer, result.c_str());
+//   }
+// }
 
 void AiCamera::sendData() {
   uint8_t payload[WS_BUFFER_SIZE];
@@ -130,12 +181,52 @@ void AiCamera::command(const char* command, const char* value, char* result) {
 
 void AiCamera::setOnReceived(void (*func)()) { __on_receive__ = func; }
 
+// void AiCamera::loop() {
+//   this->readInto(receive);
+//   #ifdef AI_CAM_DEBUG
+//   DebugSerial.println(receive);
+//   #endif
+//   if (strlen(receive) == 0) {
+//     return;
+//   }
+//   if (IsStartWith(receive, "[CONNECTED]")) {
+//     #ifdef AI_CAM_DEBUG
+//     this->subString(receive, 11);
+//     DebugSerial.print("Connected from ");
+//     DebugSerial.println(receive);
+//     #endif
+//   } else if (IsStartWith(receive, "[DISCONNECTED]")) {
+//     #ifdef AI_CAM_DEBUG
+//     this->subString(receive, 14);
+//     DebugSerial.println("Disconnected from ");
+//     DebugSerial.println(receive);
+//     #endif
+//     return;
+//   } else {
+//     this->subString(receive, strlen(WS_HEADER));
+//     // #ifdef AI_CAM_DEBUG
+//     // DebugSerial.print("[AI_CAMERA] Received: ");
+//     // DebugSerial.println(receive);
+//     // #endif
+//     recvBuffer.clear();
+//     DeserializationError err = deserializeJson(recvBuffer, receive);
+//     // if (err != DeserializationError::Ok) {
+//     //   DebugSerial.print("[ERROR] Received failed: ");
+//     //   DebugSerial.println(err.c_str());
+//     //   recvBuffer.clear();
+//     // } else {
+//       if (__on_receive__ != NULL) {
+//         __on_receive__();
+//       }
+//     // }
+//   }
+//   this->sendData();
+// }
+
 void AiCamera::loop() {
-  char receive[WS_BUFFER_SIZE];
+  char receive[WS_BUFFER_SIZE + strlen(WS_HEADER)];
   this->readInto(receive);
-  #ifdef AI_CAM_DEBUG
-  DebugSerial.println(receive);
-  #endif
+  // this->readIntoUnblock(receive);
   if (strlen(receive) == 0) {
     return;
   }
@@ -192,7 +283,7 @@ int16_t AiCamera::getJoystick(const char* region, uint8_t axis) {
   int16_t x, y, angle, radius;
   x = (int16_t)recvBuffer[region][0];
   y = (int16_t)recvBuffer[region][1];
-  angle = atan2(x, y) * 180 / PI;
+  angle = atan2(x, y) * 180.0 / PI;
   radius = sqrt(y * y + x * x);
   switch (axis) {
     case JOYSTICK_X: return x;

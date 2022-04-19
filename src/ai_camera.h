@@ -31,7 +31,8 @@ class AiCamera {
     void begin();
     void begin(const char* ssid, const char* password, const char* wifiMode, const char* wsPort, const char* cameraMode);
     void readInto(char* buffer);
-    String read();
+    bool read();
+    void readIntoUnblock(char* buffer);
     void sendData();
     void set(const char* command);
     void set(const char* command, const char* value);

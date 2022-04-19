@@ -16,27 +16,29 @@
 
 AiCamera aiCam = AiCamera("aiCam", "aiCam");
 
-void on_receive() {
-  Serial.print("Slider D: ");Serial.println(aiCam.getSlider("D"));
-  Serial.print("Switch J: ");Serial.println(aiCam.getSwitch("J"));
-  Serial.print("Button I: ");Serial.println(aiCam.getButton("I"));
-  Serial.print("Joystick Q X: ");Serial.println(aiCam.getJoystick("Q", JOYSTICK_X));
-  Serial.print("Joystick Q Y: ");Serial.println(aiCam.getJoystick("Q", JOYSTICK_Y));
-  Serial.print("Throttle K: ");Serial.println(aiCam.getThrottle("K"));
-  aiCam.setMeter("H", 46);
-  aiCam.setRadar("B", 20, 30);
-  aiCam.setGreyscale("A", 300, 234, 678);
-  aiCam.setValue("C", 498);
+void onReceive() {
+  // Serial.print("Slider D: ");Serial.println(aiCam.getSlider("D"));
+  // Serial.print("Switch J: ");Serial.println(aiCam.getSwitch("J"));
+  // Serial.print("Button I: ");Serial.println(aiCam.getButton("I"));
+  // Serial.print("Joystick Q X: ");Serial.println(aiCam.getJoystick("Q", JOYSTICK_X));
+  // Serial.print("Joystick Q Y: ");Serial.println(aiCam.getJoystick("Q", JOYSTICK_Y));
+  Serial.print("Joystick Q Angle: ");Serial.println(aiCam.getJoystick("Q", JOYSTICK_ANGLE));
+  Serial.print("Joystick Q Radius: ");Serial.println(aiCam.getJoystick("Q", JOYSTICK_RADIUS));
+  // Serial.print("Throttle K: ");Serial.println(aiCam.getThrottle("K"));
+  // aiCam.setMeter("H", 46);
+  // aiCam.setRadar("B", 20, 30);
+  // aiCam.setGreyscale("A", 300, 234, 678);
+  // aiCam.setValue("C", 498);
 }
 
 void setup() {
   Serial.begin(115200);
   Serial.println("aiCam begin");
   aiCam.begin(SSID, PASSWORD, WIFI_MODE, PORT, CAMERA_MODE);
-  aiCam.setOnReceived(on_receive);
+  aiCam.setOnReceived(onReceive);
 }
 
 void loop() {
   aiCam.loop();
-  delay(10);
+  delay(100);
 }
