@@ -15,7 +15,7 @@ SoftwareSerial dSerial(10, 11); // RX, TX
 #define StrAppend(str, suffix) uint32_t len=strlen(str); str[len] = suffix; str[len+1] = '\0'
 #define StrClear(str) str[0] = 0
 #define SERIAL_TIMEOUT 100
-#define WS_BUFFER_SIZE 200
+#define WS_BUFFER_SIZE 100
 
 #ifdef AI_CAM_DEBUG_CUSTOM
 #define DateSerial dSerial
@@ -142,37 +142,37 @@ void AiCamera::command(const char* command, const char* value, char* result) {
 void AiCamera::setOnReceived(void (*func)()) { __on_receive__ = func; }
 
 void AiCamera::loop() {
+  // DebugSerial.println("AiCamera::loop");
   char receive[WS_BUFFER_SIZE + strlen(WS_HEADER)];
   this->readInto(receive);
   // this->readIntoUnblock(receive);
-  if (strlen(receive) == 0) {
-    return;
-  }
-  if (IsStartWith(receive, "[CONNECTED]")) {
-    #ifdef AI_CAM_DEBUG
-    this->subString(receive, 11);
-    DebugSerial.print("Connected from ");
-    DebugSerial.println(receive);
-    #endif
-  } else if (IsStartWith(receive, "[DISCONNECTED]")) {
-    #ifdef AI_CAM_DEBUG
-    this->subString(receive, 14);
-    DebugSerial.println("Disconnected from ");
-    DebugSerial.println(receive);
-    #endif
-    return;
-  } else {
-    this->subString(receive, strlen(WS_HEADER));
-    // #ifdef AI_CAM_DEBUG
-    // DebugSerial.print("[AI_CAMERA] Received: ");
-    // DebugSerial.println(receive);
-    // #endif
-    strcpy(recvBuffer, receive);
-    if (__on_receive__ != NULL) {
-      __on_receive__();
+  if (strlen(receive) != 0) {
+    if (IsStartWith(receive, "[CONNECTED]")) {
+      #ifdef AI_CAM_DEBUG
+      this->subString(receive, 11);
+      DebugSerial.print("Connected from ");
+      DebugSerial.println(receive);
+      #endif
+    } else if (IsStartWith(receive, "[DISCONNECTED]")) {
+      #ifdef AI_CAM_DEBUG
+      this->subString(receive, 14);
+      DebugSerial.println("Disconnected from ");
+      DebugSerial.println(receive);
+      #endif
+      return;
+    } else {
+      this->subString(receive, strlen(WS_HEADER));
+      #ifdef AI_CAM_DEBUG
+      DebugSerial.print("[AI_CAMERA] Received: ");
+      DebugSerial.println(receive);
+      #endif
+      strcpy(recvBuffer, receive);
+      if (__on_receive__ != NULL) {
+        __on_receive__();
+      }
     }
-  }
   this->sendData();
+  }
 }
 
 int16_t AiCamera::getSlider(uint8_t region) {
@@ -196,10 +196,12 @@ int16_t AiCamera::getJoystick(uint8_t region, uint8_t axis) {
   char yStr[4];
   int16_t x, y, angle, radius;
   getStrOf(recvBuffer, region, valueStr, ';');
-  getStrOf(valueStr, 0, xStr, ",");
-  getStrOf(valueStr, 1, yStr, ",");
-  x = (int16_t)String(xStr).toInt();
-  y = (int16_t)String(yStr).toInt();
+  x = getIntOf(valueStr, 0, ',');
+  y = getIntOf(valueStr, 1, ',');
+  // getStrOf(valueStr, 0, xStr, ",");
+  // getStrOf(valueStr, 1, yStr, ",");
+  // x = (int16_t)String(xStr).toInt();
+  // y = (int16_t)String(yStr).toInt();
   angle = atan2(x, y) * 180.0 / PI;
   radius = sqrt(y * y + x * x);
   switch (axis) {
@@ -214,8 +216,13 @@ int16_t AiCamera::getJoystick(uint8_t region, uint8_t axis) {
 uint8_t AiCamera::getDPad(uint8_t region) {
   char value[10];
   getStrOf(recvBuffer, region, value, ';');
-  
-  return value;
+  uint8_t result;
+  if ((String)value == (String)"forward") result = DPAD_FORWARD;
+  else if ((String)value == (String)"backward") result = DPAD_BACKWARD;
+  else if ((String)value == (String)"left") result = DPAD_LEFT;
+  else if ((String)value == (String)"right") result = DPAD_RIGHT;
+  else if ((String)value == (String)"stop") result = DPAD_STOP;
+  return result;
 }
 
 int16_t AiCamera::getThrottle(uint8_t region) {
@@ -317,20 +324,23 @@ void AiCamera::setStrOf(char* str, uint8_t index, String value) {
       break;
     }
   }
-  String strValue = String(str).substring(0, start) + value + String(str).substring(end);
+  String strString = str;
+  String strValue = strString.substring(0, start) + value + strString.substring(end);
   strcpy(str, strValue.c_str());
 }
 
-int16_t AiCamera::getIntOf(char* str, uint8_t index) {
+int16_t AiCamera::getIntOf(char* str, uint8_t index, char divider=';') {
   int16_t result;
-  char strResult[20];
-  getStrOf(str, index, strResult, ';');
+  char strResult[6];
+  getStrOf(str, index, strResult, divider);
+  // Serial.print("AiCamera::getIntOf str result: ");
+  // Serial.println(strResult);
   result = String(strResult).toInt();
   return result;
 }
 
 bool AiCamera::getBoolOf(char* str, uint8_t index) {
-  char strResult[20];
+  char strResult[5];
   getStrOf(str, index, strResult, ';');
   return String(strResult) == "true";
 }

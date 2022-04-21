@@ -88,7 +88,7 @@ class AiCamera {
     void getStrOf(char* str, uint8_t index, char* result, char divider);
     // void setStrOf(char* str, uint8_t index, char* value);
     void setStrOf(char* str, uint8_t index, String value);
-    int16_t getIntOf(char* str, uint8_t index);
+    int16_t getIntOf(char* str, uint8_t index, char divider=';');
     bool getBoolOf(char* str, uint8_t index);
     double getDoubleOf(char* str, uint8_t index);
 };
