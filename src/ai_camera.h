@@ -59,31 +59,28 @@ class AiCamera {
     void readInto(char* buffer);
     bool read();
     void readIntoUnblock(char* buffer);
-    void sendData();
+    void sendData(char* buf);
     void set(const char* command);
     void set(const char* command, const char* value);
     void get(const char* command, char* result);
     void get(const char* command, const char* value, char* result);
     void command(const char* command, const char* value, char* result) ;
-    void setOnReceived(void (*func)());
+    void setOnReceived(void (*func)(char*, char*));
     void loop();
 
-    int16_t getSlider(uint8_t region);
-    bool getButton(uint8_t region);
-    bool getSwitch(uint8_t region);
-    int16_t getJoystick(uint8_t region, uint8_t axis);
-    uint8_t getDPad(uint8_t region);
-    int16_t getThrottle(uint8_t region);
-    void setMeter(uint8_t region, double value);
-    void setRadar(uint8_t region, int16_t angle, double distance);
-    void setGreyscale(uint8_t region, uint16_t value1, uint16_t value2, uint16_t value3);
-    void setValue(uint8_t region, double value);
+    int16_t getSlider(char* buf, uint8_t region);
+    bool getButton(char* buf, uint8_t region);
+    bool getSwitch(char* buf, uint8_t region);
+    int16_t getJoystick(char* buf, uint8_t region, uint8_t axis);
+    uint8_t getDPad(char* buf, uint8_t region);
+    int16_t getThrottle(char* buf, uint8_t region);
+    void setMeter(char* buf, uint8_t region, double value);
+    void setRadar(char* buf, uint8_t region, int16_t angle, double distance);
+    void setGreyscale(char* buf, uint8_t region, uint16_t value1, uint16_t value2, uint16_t value3);
+    void setValue(char* buf, uint8_t region, double value);
 
   private:
     void subString(char* str, int16_t start, int16_t end=-1);
-    void (*__on_receive__)();
-    char name[32];
-    char type[32];
     // void getStrOf(char* str, uint8_t index, char* result);
     void getStrOf(char* str, uint8_t index, char* result, char divider);
     // void setStrOf(char* str, uint8_t index, char* value);
